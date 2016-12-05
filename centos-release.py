@@ -3,7 +3,7 @@
 # Description: Determine if the specified release of CentOS is available
 # Requires: Python 2.6 or later, python-lxml, python-requests, python-dateutil
 # Author: John McNally, jmcnally@acm.org
-# Version: 1.00
+# Version: 1.01
 # Release date: 12/5/2016
 
 def get_page():
@@ -30,11 +30,25 @@ def format_date(datestring, format):
     d = dateutil.parser.parse(datestring)
     return d.strftime(format)
 
+def usage():
+    print "usage: centos-release.py VERSION\n \
+    VERSION      target CentOS version (n.n)\n \
+    -h           show this help message and exit"
+
 # MAIN()
 import sys
 from lxml import html
 
-target_version = sys.argv[1]
+if len(sys.argv) == 2:
+    if sys.argv[1] == '-h':
+        usage()
+        sys.exit(0)
+    else:
+        target_version = sys.argv[1]
+else:
+    usage()
+    sys.exit(1)
+
 page = get_page()
 if page is None:
     print "ERROR: Unable to connect to any CentOS mirror"
