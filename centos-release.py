@@ -24,11 +24,11 @@ def get_page():
     # Unable to connect to any URL
     return None
 
-def format_date(datestring, format):
+def format_date(datestring, formatstring):
     from datetime import date
     import dateutil.parser
     d = dateutil.parser.parse(datestring)
-    return d.strftime(format)
+    return d.strftime(formatstring)
 
 def usage():
     print "usage: centos-release.py VERSION\n \
