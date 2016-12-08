@@ -71,6 +71,6 @@ echo "UniFi Controller successfully upgraded to version $new_version"
 
 # Add custom NTP server to config.properties
 # Note: This file is not created by default
-echo config.ntp_server=time1.intranet.psfc.coop >> $destination/UniFi/data/sites/default/config.properties
+echo config.ntp_server=time.mydomain.com >> $destination/UniFi/data/sites/default/config.properties
 
 exit 0
