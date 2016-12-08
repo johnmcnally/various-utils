@@ -7,7 +7,7 @@
 # Release date: 12/8/2016
 
 def usage():
-    print "usage: unifi-version [-h] [-a]\n \
+    print "usage: unifi-version.py [-h] [-a]\n \
     -a, --all        show all bundled firmware\n \
     -h, --help       show this help message and exit"
 
