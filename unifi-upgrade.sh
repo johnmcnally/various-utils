@@ -1,21 +1,21 @@
 #!/bin/bash
-# Name unifi-upgrade.sh
+# Name unifi-upgrade
 # Description: Upgrade the current installation of Ubiquiti UniFi Controller
 # Requires: CentOS 7 or RHEL 7, bash
 # Author: John McNally, jmcnally@acm.org
-# Version 1.00
-# Release date: 10/17/2016
+# Version 1.0.2
+# Release date: 10/10/2017
 
 function usage()
 {
-echo -e "Usage: unifi-upgrade.sh VERSION
+echo -e "Usage: $script_name VERSION
 
 Mandatory arguments:
   VERSION             target version of Unifi Controller (nn.nn.nn)"
 }
 
 # Initialize variables
-script_name=`echo $0 | sed -nr "s/.*\/(.*)/\1/p"`
+script_name=`basename $0`
 source="/usr/local/src/tars"
 destination="/opt"
 unifi_user="ubnt"
@@ -48,8 +48,11 @@ fi
 # Rename the .zip file
 mv $source/UniFi.unix.zip $source/UniFi.unix-$new_version.zip
 
-# Stop the MongoDB and Unifi services
+# Stop the Unifi service
 systemctl stop unifi
+
+# Stop the native mongod service, in case it's running.
+# Note: Unifi runs it's own, captive MongoDB service.
 systemctl stop mongod
 
 # Install the new version
@@ -57,20 +60,21 @@ mv $destination/UniFi/ $destination/UniFi-$current_version
 unzip -q $source/UniFi.unix-$new_version.zip -d $destination
 chown -R $unifi_user:$unifi_user $destination/UniFi
 
-# Start the MongoDB and Unifi services
-systemctl start mongod
+# Start the Unifi service
 systemctl start unifi
 sleep 5
+
+# Add custom NTP server to config.properties
+# Note: This file is not created by default
+sudo -u $unifi_user mkdir -p $destination/UniFi/data/sites/default
+sudo -u $unifi_user echo config.ntp_server=time1.intranet.psfc.coop >> $destination/UniFi/data/sites/default/config.properties
 
 # Add HTTPS cipher string to system.properties and restart the unifi service
 # The restart is necessary because system.properties is created when the controller first runs.
 echo "unifi.https.ciphers=$https_cipher_string" >> $destination/UniFi/data/system.properties
+
 systemctl restart unifi
 
 echo "UniFi Controller successfully upgraded to version $new_version"
-
-# Add custom NTP server to config.properties
-# Note: This file is not created by default
-echo config.ntp_server=time.mydomain.com >> $destination/UniFi/data/sites/default/config.properties
 
 exit 0
