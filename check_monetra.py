@@ -1,10 +1,12 @@
-#!/usr/bin/python
+#!/usr/local/groundwork/python/bin/python
+##!/usr/bin/env /usr/bin/python
+##!/usr/bin/python
 # Name: check_monetra.py
 # Description: Nagios plugin to check Monetra Payment Server health
 # Requires: Python 2.6 or later, python-argparse, python-requests
 # Author: John McNally, jmcnally@acm.org
-# Version: 1.00
-# Release date: 11/26/2016
+# Version: 1.0.1
+# Release date: 2/30/2018
 
 def perform_check(args):
     from datetime import timedelta
@@ -64,7 +66,7 @@ def perform_check(args):
 
     # Format the response elapsed time
     if warn != 0 or critical != 0:
-        rt_output = "in {0}.{1} seconds response time".format(r.elapsed.seconds,str(r.elapsed.microseconds).zfill(6))
+        rt_output = "in {0:.3f} seconds response time".format(float(r.elapsed.seconds) + float(r.elapsed.microseconds) / 1000000)
         if args.verbose:
             print "Request completed {0}".format(rt_output)
 
@@ -128,6 +130,7 @@ def define_parser():
 
 # MAIN()
 import sys, traceback
+#sys.path.append('/usr/lib/python2.7/site-packages')
 
 parser = define_parser()
 args = parser.parse_args()
