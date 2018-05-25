@@ -1,0 +1,106 @@
+#!/bin/bash
+
+# Name: check_ganeti
+# Description: Nagios plugin to check Ganeti service status
+# Requires: RHEL/CentOS, Ganeti 2.9 or later
+# Author: John McNally, jmcnally@acm.org
+# Version: 1.0.1
+# Release date: 5/23/2018
+
+# Nagios Status Codes
+OK=0
+WARNING=1
+CRITICAL=2
+UNKNOWN=3
+
+# Other variables
+active_count=0
+status_code=$OK
+status_text=""
+output_text=""
+role_text=""
+os_major_version=""
+
+function do_systemd()
+{
+  if [ `hostname` == `cat /var/lib/ganeti/ssconf_master_node` ]; then
+    role_text="master"
+    # Modify this array per environment
+    declare -a services=(
+                    "ganeti-confd"
+                    #"ganeti-kvmd"
+                    "ganeti-luxid"
+                    "ganeti-noded"
+                    "ganeti-rapi"
+                    "ganeti-wconfd"
+                   )
+  else
+    role_text="non-master"
+    declare -a services=(
+                    "ganeti-confd"
+                    "ganeti-noded"
+                   )
+  fi
+
+  for service in "${services[@]}"
+  do
+    status_text=`systemctl is-active $service.service 2>&1`
+    if [ $? == 0 ]; then
+      ((active_count++))
+    else
+      status_code=$CRITICAL
+      output_text="$output_text $service $status_text;"
+    fi
+  done
+}
+
+function do_initd
+{
+  if [ `hostname` == `cat /var/lib/ganeti/ssconf_master_node` ]; then
+    role_text="master"
+    # Modify this array per environment
+    declare -a services=(
+                    "ganeti-masterd"
+                    "ganeti-noded"
+                    "ganeti-rapi"
+                   )
+  else
+    role_text="non-master"
+    declare -a services=(
+                    "ganeti-noded"
+                   )
+  fi
+
+  status_text=`service ganeti status 2>&1`
+
+  for service in "${services[@]}"
+  do
+    result=`echo $status_text | egrep "$service.+is running"`
+    if [ -n "$result" ]; then
+      ((active_count++))
+    else
+      status_code=$CRITICAL
+      output_text="$output_text $service inactive;"
+    fi
+  done
+}
+
+#MAIN()
+os_major_version=`cat /etc/redhat-release | sed -r 's/.* ([0-9]*)\..*/\1/g'`
+
+if [ $os_major_version == "7" ]; then
+  do_systemd
+elif [ $os_major_version -le "6" ]; then
+  do_initd
+else
+  echo "GANETI UNKNOWN - OS version unsupported"
+  status_code=$UNKNOWN
+fi
+
+if [ $status_code == $OK ]; then
+  echo "GANETI OK - $active_count service(s) active on $role_text node"
+elif [ $status_code == $CRITICAL ]; then
+  echo "GANETI CRITICAL - $output_text"
+fi
+
+exit $status_code
