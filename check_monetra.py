@@ -1,12 +1,10 @@
-#!/usr/local/groundwork/python/bin/python
-##!/usr/bin/env /usr/bin/python
-##!/usr/bin/python
+#!/usr/bin/python3
 # Name: check_monetra.py
 # Description: Nagios plugin to check Monetra Payment Server health
-# Requires: Python 2.6 or later, python-argparse, python-requests
+# Requires: Python 3.6 or later, python-argparse, python-requests
 # Author: John McNally, jmcnally@acm.org
-# Version: 1.0.1
-# Release date: 2/30/2018
+# Version: 1.1.0
+# Release date: 4/20/2023
 
 def perform_check(args):
     from datetime import timedelta
@@ -46,7 +44,7 @@ def perform_check(args):
     </MonetraTrans>\n".format(user,password)
 
     if args.verbose:
-        print xml_in
+        print (xml_in)
 
     # Post the request
     try:
@@ -59,21 +57,21 @@ def perform_check(args):
         exc_type, exc_value, exc_traceback = sys.exc_info()
         if args.verbose:
             lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
-            print ''.join('!! ' + line for line in lines)
+            print (''.join('!! ' + line for line in lines))
         else:
-            print "MONETRA CRITICAL - {0}".format(exc_value)
+            print ("MONETRA CRITICAL - {0}".format(exc_value))
         sys.exit(CRITICAL)
 
     # Format the response elapsed time
     if warn != 0 or critical != 0:
         rt_output = "in {0:.3f} seconds response time".format(float(r.elapsed.seconds) + float(r.elapsed.microseconds) / 1000000)
         if args.verbose:
-            print "Request completed {0}".format(rt_output)
+            print ("Request completed {0}".format(rt_output))
 
     # Parse the response text as XML
     xml_out = r.text
     if args.verbose:
-        print xml_out
+        print (xml_out)
 
     root = ET.fromstring(xml_out)
 
@@ -88,22 +86,22 @@ def perform_check(args):
     if code == 'SUCCESS':
         if msoft_code == 'INT_SUCCESS':
             if warn == 0 and critical == 0:
-                print "MONETRA OK - {0}".format(verbiage)
+                print ("MONETRA OK - {0}".format(verbiage))
                 sys.exit(OK)
             elif r.elapsed <= timedelta(seconds=warn):
-                print "MONETRA OK - {0} {1}".format(verbiage, rt_output)
+                print ("MONETRA OK - {0} {1}".format(verbiage, rt_output))
                 sys.exit(OK)
             elif r.elapsed <= timedelta(seconds=critical):
-                print "MONETRA WARNING - {0} {1} {2} (> {3} seconds)".format(code, verbiage, rt_output, warn)
+                print ("MONETRA WARNING - {0} {1} {2} (> {3} seconds)".format(code, verbiage, rt_output, warn))
                 sys.exit(WARNING)
        	    elif r.elapsed > timedelta(seconds=critical):
-                print "MONETRA CRITICAL - {0} {1} {2} (> {3} seconds)".format(code, verbiage, rt_output, critical)
+                print ("MONETRA CRITICAL - {0} {1} {2} (> {3} seconds)".format(code, verbiage, rt_output, critical))
                 sys.exit(CRITICAL)
         else:
-            print "MONETRA WARNING - {0} {1} {2}".format(code, msoft_code, verbiage)
+            print ("MONETRA WARNING - {0} {1} {2}".format(code, msoft_code, verbiage))
             sys.exit(WARNING)
     else:
-        print "MONETRA CRITICAL - {0} {1} {2}".format(code, msoft_code, verbiage)
+        print ("MONETRA CRITICAL - {0} {1} {2}".format(code, msoft_code, verbiage))
         sys.exit(CRITICAL)
 
 def define_parser():
@@ -130,12 +128,11 @@ def define_parser():
 
 # MAIN()
 import sys, traceback
-#sys.path.append('/usr/lib/python2.7/site-packages')
 
 parser = define_parser()
 args = parser.parse_args()
 
 if args.verbose:
-    print args
+    print (args)
 
 args.func(args)
