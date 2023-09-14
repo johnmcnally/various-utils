@@ -3,15 +3,15 @@
 # Description: Upgrade the current installation of Ubiquiti UniFi Controller
 # Requires: CentOS 7 or RHEL 7, bash
 # Author: John McNally, jmcnally@acm.org
-# Version 1.0.2
-# Release date: 10/10/2017
+# Version 1.0.3
+# Release date: 4/1/2021
 
 function usage()
 {
 echo -e "Usage: $script_name VERSION
 
 Mandatory arguments:
-  VERSION             target version of Unifi Controller (nn.nn.nn)"
+  VERSION             target version of Unifi Controller (nn.nn.nn-xxxxxxxxxx)"
 }
 
 # Initialize variables
@@ -25,7 +25,7 @@ https_cipher_string="TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256,TLS_ECDHE_RSA_WITH_AE
 if [ $# -ne 0 ]; then
   new_version=$1
 else
-  echo -e "$script_name: Must specify version number"
+  echo -e "$script_name: ERROR: Must specify version number"
   usage
   exit 1
 fi
@@ -34,14 +34,14 @@ fi
 if [ -f $destination/UniFi/webapps/ROOT/app-unifi/.version ]; then
   current_version=`cat $destination/UniFi/webapps/ROOT/app-unifi/.version`
 else
-  echo "$script_name: UniFi controller not found at $destination/UniFi"
+  echo "$script_name: ERROR: UniFi controller not found at $destination/UniFi"
   exit 1
 fi
 
 # Download the target version
 wget http://dl.ubnt.com/unifi/$new_version/UniFi.unix.zip -P $source
 if [ $?	-ne 0 ]; then
-  echo "$script_name: Unable to download UniFi Controller version $new_version to $source"
+  echo "$script_name: ERROR: Unable to download UniFi Controller version $new_version to $source"
   exit 1
 fi
 
@@ -68,6 +68,8 @@ sleep 5
 # Note: This file is not created by default
 sudo -u $unifi_user mkdir -p $destination/UniFi/data/sites/default
 sudo -u $unifi_user echo config.ntp_server=time1.intranet.psfc.coop >> $destination/UniFi/data/sites/default/config.properties
+# This shouldn't be necessary, but it is.
+chown ubnt:ubnt $destination/UniFi/data/sites/default/config.properties
 
 # Add HTTPS cipher string to system.properties and restart the unifi service
 # The restart is necessary because system.properties is created when the controller first runs.
