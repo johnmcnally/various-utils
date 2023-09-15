@@ -1,7 +1,4 @@
 #!/bin/bash
-#
-# File managed by Puppet
-#
 # Name: check_ganeti
 # Description: Nagios plugin to check Ganeti service status
 # Requires: RHEL/CentOS, Ganeti 2.9 or later
