@@ -1,5 +1,7 @@
 #!/bin/bash
-
+#
+# File managed by Puppet
+#
 # Name: check_ganeti
 # Description: Nagios plugin to check Ganeti service status
 # Requires: RHEL/CentOS, Ganeti 2.9 or later
@@ -20,26 +22,44 @@ status_text=""
 output_text=""
 role_text=""
 os_major_version=""
+ganeti_major_version=""
 
 function do_systemd()
 {
   if [ `hostname` == `cat /var/lib/ganeti/ssconf_master_node` ]; then
     role_text="master"
-    # Modify this array per environment
-    declare -a services=(
-                    "ganeti-confd"
-                    #"ganeti-kvmd"
-                    "ganeti-luxid"
-                    "ganeti-noded"
-                    "ganeti-rapi"
-                    "ganeti-wconfd"
-                   )
+    if [ $ganeti_major_version == '2' ]; then
+      # Modify this array per environment
+      declare -a services=(
+                      "ganeti-confd"
+                      "ganeti-luxid"
+                      "ganeti-noded"
+                      "ganeti-rapi"
+                      "ganeti-wconfd"
+                     )
+    elif [ $ganeti_major_version == '3' ]; then
+      # Modify this array per environment
+      declare -a services=(
+                      "ganeti-luxid"
+                      "ganeti-noded"
+                      "ganeti-rapi"
+                      "ganeti-wconfd"
+                     )
+    fi
   else
     role_text="non-master"
-    declare -a services=(
-                    "ganeti-confd"
-                    "ganeti-noded"
-                   )
+    if [ $ganeti_major_version == '2' ]; then
+      # Modify this array per environment
+      declare -a services=(
+                      "ganeti-confd"
+                      "ganeti-noded"
+                     )
+    elif [ $ganeti_major_version == '3' ]; then
+      # Modify this array per environment
+      declare -a services=(
+                      "ganeti-noded"
+                     )
+    fi
   fi
 
   for service in "${services[@]}"
@@ -86,9 +106,12 @@ function do_initd
 }
 
 #MAIN()
-os_major_version=`cat /etc/redhat-release | sed -r 's/.* ([0-9]*)\..*/\1/g'`
+os_major_version=`cat /etc/redhat-release | sed -r 's/.* ([0-9]*)\..*/\1/g; s/.* ([0-9]*)$/\1/g'`
+ganeti_major_version=`cat /var/lib/ganeti/ssconf_release_version | sed -r 's/^([0-9]*)\..*/\1/g'`
 
-if [ $os_major_version == "7" ]; then
+if [ $os_major_version == "8" ]; then
+  do_systemd
+elif [ $os_major_version == "7" ]; then
   do_systemd
 elif [ $os_major_version -le "6" ]; then
   do_initd
