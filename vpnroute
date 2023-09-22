@@ -1,0 +1,64 @@
+#!/bin/bash
+#
+# Install a temporary static VPN route. Useful when local IP addresses overlap with remote VPN addresses.
+#
+function usage()
+{
+echo -e "Usage: $script_name [[ add | del ] [ <host> ]] | [ -h ]
+Manditory arguments:
+  action       action to perform - 'add' or 'del'
+  host         destination host - hostname, FQDN or IP address
+Optional arguments:
+  -h           Show usage"
+}
+
+function valid_ip()
+{
+  # Set up local variables
+  local ip=${1:-NO_IP_PROVIDED}
+  local IFS=.; local -a a=($ip)
+  # Start with a regex format test
+  [[ $ip =~ ^[0-9]+(\.[0-9]+){3}$ ]] || return 1
+  # Test values of quads
+  local quad
+  for quad in {0..3}; do
+    [[ "${a[$quad]}" -gt 255 ]] && return 1
+  done
+  return 0
+}
+
+script_name=`basename $0`
+vpn_tun_remote='192.168.5.1/32'
+
+if [[ $# != 2 ]]; then
+  usage
+  exit 0
+fi
+
+if [[ $1 == 'add' ]]; then
+  action=$1
+elif [[ $1 == 'del' ]]; then
+  action='delete'
+else
+  usage
+  exit 1
+fi
+
+if valid_ip $2; then
+  host=$2
+else
+  host=`nslookup $2 | tail -2 | head -1 | sed 's/^Address: \(.*\).*/\1/'`
+  if [[ $host == '' ]]; then
+    echo "Error: host $2 not found"
+    exit 1
+  fi
+fi
+
+vpn_gw=`netstat -rn | egrep "$vpn_tun_remote.+utun10" | tr -s ' ' | cut -f 2 -d ' '`
+
+if [[ $vpn_gw == '' ]]; then
+  echo "Error: VPN gateway not found. Tunnel must be established beforehand"
+  exit 1
+fi
+
+sudo route -n $action -net $host/32 $vpn_gw
