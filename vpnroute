@@ -2,6 +2,11 @@
 #
 # Install a temporary static VPN route. Useful when local IP addresses overlap with remote VPN addresses.
 #
+# NOTES:
+# - Must establish VPN connection before running this script.
+# - Designed for OpenVPN remote access. Tested with MacOS client and pfSense (FreeBSD) server.
+# - Modify $vpn_tun_remote value below to match the OpenVPN virtual server IP address.
+#
 function usage()
 {
 echo -e "Usage: $script_name [[ add | del ] [ <host> ]] | [ -h ]
