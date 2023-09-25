@@ -6,6 +6,7 @@
 # - Must establish VPN connection before running this script.
 # - Designed for OpenVPN remote access. Tested with MacOS client and pfSense (FreeBSD) server.
 # - Modify $vpn_tun_remote value below to match the OpenVPN virtual server IP address.
+# - The temporary route is automatically removed when the VPN tunnel is disconnected.
 #
 function usage()
 {
