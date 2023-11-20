@@ -53,7 +53,7 @@ def parse_structured(page, os, target_version):
         if target_version in versions[i]:
             version = versions[i].strip('/')
             date = format_date(dates[i].strip(),'%B %-d, %Y at %-I:%M %p')
-            print(f" {os} {version} was released or updated on {date}")
+            print(f"{os} {version} was released or updated on {date}")
 
 def parse_unstructured(page, os, target_version):
     lines = page.split("\r\n")
