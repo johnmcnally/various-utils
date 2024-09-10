@@ -3,9 +3,9 @@
 # Description: Nagios plugin to check BGP state. Also returns total prefixes, sent updates and received updates as performance data
 # Requires: net-snmp, net-snmp-utils
 # Author: John McNally, jmcnally@acm.org
-# Release date: 8/29/2024
+# Release date: 9/9/2024
 
-do_state() {
+function do_state() {
   # State info
   state=`/usr/bin/snmpget -v1 -On -c $community $hostname .1.3.6.1.2.1.15.3.1.2.$neighbor | cut -d ':' -f 2 | sed 's/ *//'`
   admin_status=`/usr/bin/snmpget -v1 -On -c $community $hostname .1.3.6.1.2.1.15.3.1.3.$neighbor | cut -d ':' -f 2 | sed 's/ *//'`
@@ -41,7 +41,7 @@ do_state() {
   esac
 }
 
-do_perf_data() {
+function do_perf_data() {
   # Prefixes don't need history to be determined
   prefixes=`/usr/bin/snmpget -v1 -On -c $community $hostname 1.3.6.1.4.1.9.9.187.1.2.4.1.1.$neighbor.1.1 | head -n1 | cut -d ':' -f 2 | sed 's/ *//'`
 
@@ -91,6 +91,22 @@ do_perf_data() {
   fi
 }
 
+function usage() {
+  echo -e "Usage: $0 -H <hostname> -C <community> -n <neighbor> [ -f <file> -w <warning> -c <critical> -v -h ]
+
+  Mandatory arguments:
+    -H [hostname]         host or IP address to query
+    -C [community]        SNMP community name (v1 or 2c)
+    -n [neighbor]         interface description
+
+  Optional arguments:
+    -f [file]             path to performance data temp file (default is /tmp/)
+    -w [warning]          warning threshold (bps)
+    -c [critical]         critical threshold (bps)
+    -v                    show verbose output
+    -h                    show usage"
+}
+
 # MAIN()
 
 # Variables
@@ -105,7 +121,6 @@ current_sent=0
 file='/tmp'
 warning=0
 critical=0
-usage="Usage: $0 -H <hostname> -C <community> -n <neighbor> [ -f <file> -w <warning> -c <critical> -v -h ]"
 
 # Nagios Status Codes
 OK=0
@@ -123,19 +138,19 @@ while getopts ":n:C:H:f:w:c:vh" options; do
     w ) warning="$OPTARG";;
     c ) critical="$OPTARG";;
     v ) verbose=true;;
-    h ) echo $usage
+    h ) usage
         exit 0;;
     \?) echo "Invalid option: -$OPTARG" 2>&1
-        echo $usage
+        usage
         exit 1;;
-    * ) echo $usage
-      exit 1;;
+    * ) usage
+        exit 1;;
   esac
 done
 
 if [[ $hostname == '' ]] || [[ $community == '' ]] || [[ $neighbor == ''  ]]; then
   echo "ERROR - mandatory argument(s) missing"
-  echo $usage
+  usage
   exit $UNKNOWN
 fi
 
